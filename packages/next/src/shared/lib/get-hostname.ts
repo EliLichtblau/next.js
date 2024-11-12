@@ -21,3 +21,11 @@ export function getHostname(
 
   return hostname.toLowerCase()
 }
+
+export function getHostNameFromRequest(parsed: {hostname?: string | null}, request: Request) {
+  const host = request.headers.get("host")
+  if (!host) {
+    return parsed.hostname?.toLowerCase()
+  }
+  return host.split(":", 1)[0].toLowerCase()
+}

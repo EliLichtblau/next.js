@@ -1,0 +1,1 @@
+module.exports = typeof Bun === "undefined" ? {} : Bun
