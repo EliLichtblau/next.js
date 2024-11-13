@@ -58,6 +58,7 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
     // }
 
     constructor(
+        // response: Response,
         public transformStream = new TransformStream(),
     ) {
         super(transformStream.writable)
@@ -68,8 +69,10 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
         // writer.
 
     }
-    setHeader(name: string, value: string | string[]) {
-        this.headers.set(name, typeof value === "string" ? value : value.join(","))
+    setHeader(name: string, value: number | string | string[]) {
+        this.headers.set(name, typeof value === "string" ? value :
+            typeof value === "number" ? value.toString() :
+                value.join(","))
         return this
     }
     removeHeader(name: string) {
@@ -120,7 +123,7 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
     public async toResponse() {
         // should construct this on .write as well
         if (!this.sent) await this.sendPromise.promise
-       
+
         const body = this.textBody ?? this.transformStream.readable
 
         let bodyInit: BodyInit = body
@@ -135,7 +138,7 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
     }
 
     onClose(callback: () => void): void {
-        
+
     }
 
 

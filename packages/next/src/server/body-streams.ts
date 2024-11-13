@@ -37,6 +37,26 @@ export interface CloneableBody {
   cloneBodyStream(): Readable
 }
 
+
+export function getClonableBodyBun(request: Request): CloneableBody {
+  
+  return {
+    async finalize() {
+      return
+    },
+    cloneBodyStream() {
+      const clone = request.clone()
+      const body = clone.body
+      const p1 = new PassThrough()
+      // this is dumb not figuring this out rn
+      body?.getReader().read().then(r=>{
+        p1.push(r)
+      })
+      return p1
+    }
+  }
+}
+
 export function getCloneableBody<T extends IncomingMessage>(
   readable: T
 ): CloneableBody {
