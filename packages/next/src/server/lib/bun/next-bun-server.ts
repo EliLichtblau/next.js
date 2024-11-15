@@ -792,7 +792,7 @@ export class NextBunServer extends BaseServer<
     protected normalizeRes(
         res: BunNextResponse | Response
     ): BunNextResponse {
-        return !(res instanceof BunNextResponse) ? new BunNextResponse(res) : res
+        return !(res instanceof BunNextResponse) ? new BunNextResponse() : res
     }
 
     public getRequestHandler(): BunRequestHandler {
@@ -831,12 +831,12 @@ export class NextBunServer extends BaseServer<
         opts: { unstable_onlyGenerated?: boolean }
     }) {
         // TODO: actually do stuff here
-        const mockedResponse = new Response()
+        // const mockedResponse = new Response()
 
         const handler = this.getRequestHandler()
         await handler(
             new BunNextRequest(new Request("")),
-            new BunNextResponse(mockedResponse)
+            new BunNextResponse()
         )
 
         //await mocked.res.hasStreamed

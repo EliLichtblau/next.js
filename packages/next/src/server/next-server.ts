@@ -377,7 +377,7 @@ export default class NextNodeServer extends BaseServer<
         if (cacheHandlers[key]) {
           ;(globalThis as any).__nextCacheHandlers[key] = interopDefault(
             await dynamicImportEsmDefault(
-              formatDynamicImportPath(this.distDir, cacheHandlers[key])
+              formatDynamicImportPath(this.distDir, cacheHandlers[key] as any)
             )
           )
         }

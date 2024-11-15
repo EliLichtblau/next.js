@@ -120,6 +120,9 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
     get sent() {
         return this._sent
     }
+    public end(value: string) {
+
+    }
     public async toResponse() {
         // should construct this on .write as well
         if (!this.sent) await this.sendPromise.promise
