@@ -5,7 +5,7 @@ import { SYMBOL_CLEARED_COOKIES, type NextApiRequestCookies } from "../api-utils
 import type { Writable } from "node:stream";
 import { resolve } from "path";
 import { DetachedPromise } from "../../lib/detached-promise";
-
+import Bun from "next/experimental/bun/explicit-bun"
 type Req = Request & {
     [NEXT_REQUEST_META]?: RequestMeta
     cookies?: NextApiRequestCookies
@@ -13,13 +13,14 @@ type Req = Request & {
 }
 
 export class BunNextRequest extends BaseNextRequest<any> {
-    public headers = (this._req.headers as any).toJSON()
+    public headers = (this._req.headers as any).toJSON() as Record<string, string>
     public fetchMetrics: FetchMetric[] | undefined = this._req?.fetchMetrics;
 
     [NEXT_REQUEST_META]: RequestMeta = this._req[NEXT_REQUEST_META] || {}
 
     constructor(private _req: Req) {
-        super(_req.method.toUpperCase(), _req.url!, _req)
+        const url = new URL(_req.url).pathname
+        super(_req.method.toUpperCase(), url, _req)
     }
     get originalRequest() {
         // Need to mimic these changes to the original req object for places where we use it:
@@ -40,9 +41,10 @@ export class BunNextRequest extends BaseNextRequest<any> {
 // that doesn't cause an impossible api break
 export class BunNextResponse extends BaseNextResponse<WritableStream> {
     public textBody: string | undefined = undefined
+    private fileStatic: any = undefined
     public [SYMBOL_CLEARED_COOKIES]?: boolean
 
-    public statusCode: number = 0
+    public statusCode: number | undefined = undefined
     public statusMessage: string = ""
     public headers: Headers = new Headers()
 
@@ -91,6 +93,11 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
         return this.headers.get(name) || undefined
     }
 
+    file(f: any) {
+        this.fileStatic = Bun.file(f)
+        this.send()
+    }
+
     getHeaders() {
         // possibly should cache this is rather expensive
         const headers = (this.headers as any).toJSON() //as Record<string, string>
@@ -114,6 +121,7 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
     private readonly sendPromise = new DetachedPromise<void>()
     private _sent = false
     public send() {
+        console.log("sent")
         this.sendPromise.resolve()
         this._sent = true
     }
@@ -121,12 +129,21 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
         return this._sent
     }
     public end(value: string) {
+        if (this.textBody !== undefined) {
+            this.textBody+=value
+        } else {
+            this.textBody = value
+        }
+        this.send()
 
     }
     public async toResponse() {
         // should construct this on .write as well
         if (!this.sent) await this.sendPromise.promise
-
+        // File assets have precedence
+        if (this.fileStatic) {
+            return new Response(this.fileStatic)
+        }
         const body = this.textBody ?? this.transformStream.readable
 
         let bodyInit: BodyInit = body

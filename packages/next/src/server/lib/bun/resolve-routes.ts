@@ -123,13 +123,15 @@ export function getResolveRoutes(
 
     const urlParts = (req.url || '').split('?', 1)
     const urlNoQuery = urlParts[0]
-
+    console.log({urlNoQuery})
     // this normalizes repeated slashes in the path e.g. hello//world ->
     // hello/world or backslashes to forward slashes, this does not
     // handle trailing slash as that is handled the same as a next.config.js
     // redirect
     if (urlNoQuery?.match(/(\\|\/\/)/)) {
       parsedUrl = url.parse(normalizeRepeatedSlashes(req.url!), true)
+    //   console.log("looping here", req.url, parsedUrl)
+    //   throw new Error("crash")
       return {
         parsedUrl,
         resHeaders,
@@ -485,6 +487,7 @@ export function getResolveRoutes(
               try {
                 await serverResult.requestHandler(req, res, parsedUrl)
               } catch (err: any) {
+                console.log(err)
                 if (!('result' in err) || !('response' in err.result)) {
                   throw err
                 }
@@ -503,6 +506,7 @@ export function getResolveRoutes(
                 }
               }
             } catch (e) {
+                console.log(e)
               // If the client aborts before we can receive a response object
               // (when the headers are flushed), then we can early exit without
               // further processing.

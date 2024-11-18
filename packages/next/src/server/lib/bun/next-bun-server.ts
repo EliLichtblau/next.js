@@ -444,7 +444,8 @@ export class NextBunServer extends BaseServer<
         delete query.__nextLocale
         delete query.__nextDefaultLocale
         delete query.__nextInferredLocaleFromDefault
-
+        console.log("module.render - will fail")
+        // @ts-ignore
         await module.render(req.originalRequest, res.originalResponse, {
             previewProps: this.renderOpts.previewProps,
             revalidate: this.revalidate.bind(this),
@@ -627,6 +628,22 @@ export class NextBunServer extends BaseServer<
         return null
     }
 
+    protected handleNextImageRequest: RouteHandler<BunNextRequest, BunNextResponse> = async (
+        req,
+        res,
+        parsedUrl
+    ) => {
+        console.log(parsedUrl)
+        if (!parsedUrl.pathname || !parsedUrl.pathname.startsWith('/_next/image')) {
+            return false
+        }
+        console.log(parsedUrl)
+        // this.ima
+        await this.routerServerHandler!(req.originalRequest, new Response())
+        // console.log(req)
+        // res.body("crap").send()
+        return false
+    }
 
     protected getNextFontManifest(): NextFontManifest | undefined {
         return loadManifest(
@@ -1469,3 +1486,5 @@ export class NextBunServer extends BaseServer<
 
 
 }
+
+export default NextBunServer

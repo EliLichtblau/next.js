@@ -138,6 +138,7 @@ export async function startServer(
   }
 
   async function requestListener(req: IncomingMessage, res: ServerResponse) {
+    console.log(req.url)
     try {
       if (handlersPromise) {
         await handlersPromise

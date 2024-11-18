@@ -413,7 +413,7 @@ export async function initialize(opts: {
           config.experimental.proxyTimeout
         )
       }
-
+      console.log(matchedOutput)
       if (matchedOutput?.fsPath && matchedOutput.itemPath) {
         if (
           opts.dev &&

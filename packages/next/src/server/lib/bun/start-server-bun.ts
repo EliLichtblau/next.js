@@ -40,46 +40,56 @@ export async function startServerBun(
     process.title = `next-server (v${process.env.__NEXT_VERSION})`
     let handlersReady = () => { }
     let handlersError = () => { }
-    let handlersPromise: Promise<void> | undefined = new Promise<void>(
-        (resolve, reject) => {
-            handlersReady = resolve
-            handlersError = reject
+    // let handlersPromise: Promise<void> | undefined = new Promise<void>(
+    //     (resolve, reject) => {
+    //         handlersReady = resolve
+    //         handlersError = reject
+    //     }
+    // )
+    let requestHandler: (_req: Request, res: BunNextResponse) => Promise<null | undefined>
+    const server = Bun.serve({
+        port: serverOptions.port,
+        async fetch(_request) {
+            console.log(_request.url)
+            // const request = new BunNextRequest(_request)
+            const response = new BunNextResponse()
+            await requestListener(_request, response)
+            // console.log(response)
+            // response.headers.append()
+
+            return response.toResponse()
         }
-    )
-    let requestHandler: WorkerRequestHandler = async (
-        req: IncomingMessage,
-        res: ServerResponse
-    ): Promise<void> => {
-        if (handlersPromise) {
-            await handlersPromise
-            return requestHandler(req, res)
-        }
-        throw new Error('Invariant request handler was not setup')
-    }
-    let upgradeHandler: WorkerUpgradeHandler = async (
-        req,
-        socket,
-        head
-    ): Promise<void> => {
-        if (handlersPromise) {
-            await handlersPromise
-            return upgradeHandler(req, socket, head)
-        }
-        throw new Error('Invariant upgrade handler was not setup')
-    }
+    })
+    const initResult = await getRequestHandlers({
+        dir: serverOptions.dir,
+        port: serverOptions.port,
+        dev: false,
+        server,
+        // isDev: false,
+        onCleanup: () => { },//(listener) => cleanupListeners.push(listener),
+        // server,
+        hostname: serverOptions.hostname,
+        minimalMode: serverOptions.minimalMode,
+        keepAliveTimeout: serverOptions.keepAliveTimeout,
+        experimentalHttpsServer: false,
+    })
+
+    requestHandler = initResult[0]
 
     if (serverOptions.selfSignedCertificate) {
         throw new Error("Using a self signed certificate is not supported in bun")
     }
 
-    async function requestListener(req: IncomingMessage, res: ServerResponse) {
+    async function requestListener(req: Request, res: BunNextResponse) {
         try {
-            if (handlersPromise) {
-                await handlersPromise
-                handlersPromise = undefined
-            }
+            // if (handlersPromise) {
+            //     await handlersPromise
+            //     handlersPromise = undefined
+            // }
+            console.log("entering request handler")
             await requestHandler(req, res)
         } catch (err) {
+            console.log(err)
             res.statusCode = 500
             res.end('Internal Server Error')
             Log.error(`Failed to handle request for ${req.url}`)
@@ -106,16 +116,7 @@ export async function startServerBun(
         }
     }
 
-    Bun.serve({
-        port: serverOptions.port,
-        fetch(request) {
-            const response = new Response()
 
-            // response.headers.append()
-
-            return response
-        }
-    })
 
     // const nodeDebugType = getNodeDebugType()
 
@@ -138,7 +139,7 @@ type GetRequestHandlerOptions = {
 
 
 
-export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
+export async function getRequestHandlers(opts: GetRequestHandlerOptions) {
     if (!process.env.NODE_ENV) {
         (process.env.NODE_ENV as any) = opts.dev ? 'development' : 'production'
     }
@@ -157,9 +158,9 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
 
     const renderServer: LazyRenderServerInstance = {}
     renderServer.instance = require('./render-server') as typeof import('./render-server')
-    
 
-    
+
+
     async function requestHandlerImpl(_req: Request, res: BunNextResponse) {
         const req = new BunNextRequest(_req)
         if (
@@ -180,7 +181,7 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
 
             const domainLocale = detectDomainLocale(
                 config.i18n.domains,
-                getHostNameFromRequest({ hostname: urlNoQuery }, req.headers)
+                getHostname({ hostname: urlNoQuery }, req.headers)
             )
 
             const defaultLocale =
@@ -235,7 +236,7 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
             }
 
             if (
-                req.headers.get('x-nextjs-data') &&
+                req.headers['x-nextjs-data'] &&
                 fsChecker.getMiddlewareMatchers()?.length &&
                 removePathPrefix(invokePath, config.basePath) === '/404'
             ) {
@@ -291,11 +292,13 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
 
 
         }
-
+        console.log("295 start-server bun")
         async function handleRequest(handleIndex: number) {
             if (handleIndex > 5) {
                 throw new Error(`Attempted to handle request too many times ${req.url}`)
             }
+
+            const controller  = new AbortController()
 
             const {
                 finished,
@@ -308,7 +311,7 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
                 req,
                 res,
                 isUpgradeReq: false,
-                signal: new AbortSignal(), //signalFromNodeResponse(res),
+                signal: controller.signal, //signalFromNodeResponse(res),
                 invokedOutputs,
             })
 
@@ -352,7 +355,7 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
                 //     config.experimental.proxyTimeout
                 // )
             }
-
+            // console.log(matchedOutput)
             if (matchedOutput?.fsPath && matchedOutput.itemPath) {
                 if (
                     opts.dev &&
@@ -396,7 +399,10 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
                 }
 
                 try {
-                    throw new Error("Didn't server static")
+                    console.log("Serve static hit")
+                    console.log(matchedOutput)
+                    res.file(require("node:path").join(matchedOutput.itemsRoot ?? "", matchedOutput.itemPath))
+                    res.send()
                     // return await serveStatic(req, res, matchedOutput.itemPath, {
                     //     root: matchedOutput.itemsRoot,
                     //     // Ensures that etags are not generated for static files when disabled.
@@ -565,6 +571,6 @@ export async function getRequestHanlders(opts: GetRequestHandlerOptions) {
         renderServerOpts,
     )
 
-    return [requestHandler, handlers.app]
+    return [requestHandler, handlers.app] as const
 
 }

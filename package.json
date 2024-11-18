@@ -278,7 +278,8 @@
       "scheduler": "0.25.0-rc-5c56b873-20241107"
     },
     "patchedDependencies": {
-      "webpack-sources@3.2.3": "patches/webpack-sources@3.2.3.patch"
+      "webpack-sources@3.2.3": "patches/webpack-sources@3.2.3.patch",
+      "bun-types@1.1.34": "patches/bun-types@1.1.34.patch"
     }
   }
 }

@@ -8,9 +8,9 @@ import type { UrlWithParsedQuery } from 'url'
 import type { IncomingMessage, ServerResponse } from 'http'
 import type { NextUrlWithParsedQuery } from '../../request-meta'
 import type { WorkerRequestHandler, WorkerUpgradeHandler } from '../../lib/types'
-
-import './require-hook'
-import './node-polyfill-crypto'
+import "../../require-hook"
+// import '../require-hook'
+import '../../node-polyfill-crypto'
 
 import type { NextBunServer as Server } from './next-bun-server'
 import * as log from '../../../build/output/log'
@@ -32,7 +32,7 @@ let ServerImpl: typeof Server
 
 const getServerImpl = async () => {
   if (ServerImpl === undefined) {
-    ServerImpl = (await Promise.resolve(require('./next-server'))).default
+    ServerImpl = (await Promise.resolve(require('./next-bun-server'))).default
   }
   return ServerImpl
 }
@@ -322,7 +322,7 @@ function createServer(
 }
 
 // Support commonjs `require('next')`
-module.exports = createServer
+// module.exports = createServer
 // exports = module.exports
 
 // Support `import next from 'next'`
