@@ -1,3 +1,4 @@
+import '../../node-environment'
 import { loadEnvConfig } from '@next/env'
 import { APP_PATHS_MANIFEST, BUILD_ID_FILE, CLIENT_PUBLIC_FILES_PATH, MIDDLEWARE_MANIFEST, NEXT_FONT_MANIFEST, PAGES_MANIFEST, PHASE_PRODUCTION_BUILD, PRERENDER_MANIFEST, ROUTES_MANIFEST, SERVER_DIRECTORY } from '../../../api/constants'
 import { INSTRUMENTATION_HOOK_FILENAME } from '../../../lib/constants'

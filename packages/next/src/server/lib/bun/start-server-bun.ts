@@ -1,3 +1,5 @@
+import '../../node-environment'
+
 import type { IncomingMessage, ServerResponse } from "node:http";
 import url from 'node:url'
 import type { StartServerOptions } from "../start-server";
