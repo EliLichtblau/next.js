@@ -1,4 +1,5 @@
 import type { BaseNextRequest, BaseNextResponse } from './'
+import type { BunNextResponse } from './bun'
 import type { NodeNextRequest, NodeNextResponse } from './node'
 import type { WebNextRequest, WebNextResponse } from './web'
 
@@ -47,3 +48,8 @@ export const isNodeNextRequest = (
 export const isNodeNextResponse = (
   res: BaseNextResponse
 ): res is NodeNextResponse => process.env.NEXT_RUNTIME !== 'edge' && process.env.NEXT_RUNTIME !== "bun"
+
+
+export function isBunNextResponse(res: BaseNextResponse): res is BunNextResponse {
+  return process.env.NEXT_RUNTIME === "bun"
+}

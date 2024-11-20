@@ -562,7 +562,12 @@ export function getResolveRoutes(
                 const oldValue = req.headers[key]
 
                 if (oldValue !== newValue) {
-                  req.headers[key] = newValue === null ? undefined : newValue
+                    if (newValue === null || newValue === undefined) {
+                        delete req.headers[key]
+                    } else {
+                        req.headers[key] = typeof newValue === "string" ? newValue : newValue?.join(",")
+                    }
+                  
                 }
                 delete middlewareHeaders[valueKey]
               }
@@ -592,7 +597,7 @@ export function getResolveRoutes(
               }
               if (value) {
                 resHeaders[key] = value
-                req.headers[key] = value
+                req.headers[key] = typeof value === "string" ? value : value.join(",")
               }
             }
 

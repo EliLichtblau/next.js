@@ -1,5 +1,5 @@
 import type { BaseNextRequest, BaseNextResponse } from './base-http'
-import { isNodeNextResponse } from './base-http/helpers'
+import { isBunNextResponse, isNodeNextResponse } from './base-http/helpers'
 
 import { pipeToNodeResponse } from './pipe-readable'
 import { splitCookiesString } from './web/utils'
@@ -70,5 +70,18 @@ export async function sendResponse(
     } else {
       originalResponse.end()
     }
+  }
+
+  if (
+    // The type check here ensures that `req` is correctly typed, and the
+    // environment variable check provides dead code elimination.
+    process.env.NEXT_RUNTIME !== 'edge' &&
+    isBunNextResponse(res)
+  ) {
+    // TODO: figure out if I can just blindly set or if I should be piping
+    // because there exists some data that already exists?
+    res._response = response
+    res.send()
+    
   }
 }

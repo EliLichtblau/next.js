@@ -15,7 +15,6 @@ type Req = Request & {
 export class BunNextRequest extends BaseNextRequest<any> {
     public headers = (this._req.headers as any).toJSON() as Record<string, string>
     public fetchMetrics: FetchMetric[] | undefined = this._req?.fetchMetrics;
-
     [NEXT_REQUEST_META]: RequestMeta = this._req[NEXT_REQUEST_META] || {}
 
     constructor(private _req: Req) {
@@ -43,6 +42,7 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
     public textBody: string | undefined = undefined
     private fileStatic: any = undefined
     public [SYMBOL_CLEARED_COOKIES]?: boolean
+    public _response: Response | undefined
 
     public statusCode: number | undefined = undefined
     public statusMessage: string = ""
@@ -138,6 +138,9 @@ export class BunNextResponse extends BaseNextResponse<WritableStream> {
 
     }
     public async toResponse() {
+        if (this._response) {
+            return this._response
+        }
         // should construct this on .write as well
         if (!this.sent) await this.sendPromise.promise
         // File assets have precedence
